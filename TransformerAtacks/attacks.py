@@ -52,7 +52,7 @@ model = create_model(model_name, pretrained=True)
 config = resolve_data_config({}, model=model)
 transforms = create_transform(**config)
 print(config)
-
+sys.exit()
 #transforms = Compose([Resize(384), ToTensor(), Normalize(mean=(0.5,0.5, 0.5), std=(0.5, 0.5, 0.5))])
 #cifar10_test = CIFAR10(root='./datasets/test/', download=True, train=False, transform=transforms)
 indices = np.load('imagenet_indices.npy')
@@ -91,6 +91,7 @@ attack = att_type_dict[att_type]
 if 'l2' in att_type:
     size = 224 # TODO make it variable later
     eps_vals = [i * 224 * np.sqrt(3) for i in eps_vals]
+eps_vals = np.array(eps_vals)
 #epsilons = []
 f = open('accuracies.csv', 'w')
 if not os.path.exists(outdir):
