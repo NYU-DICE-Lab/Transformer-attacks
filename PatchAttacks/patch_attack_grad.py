@@ -67,7 +67,7 @@ def reconstruct_img(patches, img):
     return recon
 
 
-def MultiPatchGDAttack(model, img, label, loss=nn.CrossEntropyLoss(), iterations=40, device=torch.device('cuda:0'), max_num_patches=100, clip_flag=False, bounds=[-1, 1], lr=0.033, *args, **kwargs):
+def MultiPatchGDAttack(model, img, label, loss=nn.CrossEntropyLoss(), iterations=40, device=torch.device('cuda:0'), max_num_patches=100, clip_flag=False, bounds=[-1, 1], patch_size=16, lr=0.033, *args, **kwargs):
     base_img = copy.deepcopy(img)
     img = img.to(device)
     img.requires_grad_(True)
@@ -138,6 +138,9 @@ def build_parser():
         '-clip', '--clip', help='Clip perturbations to original image intensities', action='store_true')
     parser.add_argument('-lr', '--lr', help='Step size',
                         type=float, default=0.033)
+    parser.add_argument('-ps', '--patch_size', help='Patch size', default=16, type=int)
+    parser.add_argument('-si', '--start_idx', help='Start index for imagenet', default=0, type=int)
+    #parser.add_argument('-ns', '--skipimages', help='No. of images to skip', default=20, type=int)
     return parser
 
 
@@ -207,13 +210,13 @@ if __name__ == '__main__':
     for idx, (img, label) in enumerate(test_dl):
         if idx > args.num_images:
             break
-        if idx < 75:
+        if idx < args.start_idx:
             continue  # handling some interrupted work (temporary)
         img = img.to(device)
         bs, ch, sx, sy = img.shape
         label = label.to(device)
         succ, img, attack_img, num_patches = MultiPatchGDAttack(model, img, label, loss=nn.CrossEntropyLoss(
-        ), iterations=args.iter, device=device, max_num_patches=args.max_patches, clip_flag=clip_flag, bounds=bounds, lr=args.lr)
+        ), iterations=args.iter, device=device, max_num_patches=args.max_patches, clip_flag=clip_flag, bounds=bounds, patch_size=args.patch_size, lr=args.lr)
         logging.info(f'{idx}, {succ}, {num_patches}')
         attack_succ += succ
         ks[idx] = (succ, num_patches)
