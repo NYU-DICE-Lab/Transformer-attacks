@@ -144,6 +144,7 @@ def build_parser():
 if __name__ == '__main__':
     parser = build_parser()
     args = parser.parse_args()
+    print(f'config:{str(args)}')
 
     outdir = Path(args.outdir)
     if not os.path.exists(outdir):
