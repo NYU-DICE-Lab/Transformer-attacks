@@ -40,7 +40,8 @@ def prod(x):
 
 
 mtype_dict = {'vit384': 'vit_base_patch16_384', 'vit224': 'vit_base_patch16_224',
-              'wide-resnet': 'wide_resnet101_2', 'deit': None, 'bit_152_4': 'resnetv2_152x4_bitm'}
+              'wide-resnet': 'wide_resnet101_2', 'deit224': 'vit_deit_base_patch16_224', 'bit_152_4': 'resnetv2_152x4_bitm',
+              'deit224_distill':'vit_deit_base_distilled_patch16_224', 'effnet': 'tf_efficientnet_l2_ns'}
 att_type_dict = {'pgdlinf': fb.attacks.LinfProjectedGradientDescentAttack(rel_stepsize=0.033, steps=40, random_start=True),
                  'pgdl2': fb.attacks.L2ProjectedGradientDescentAttack(steps=40, random_start=True)
                  }
@@ -121,8 +122,7 @@ def build_parser():
     parser.add_argument(
         '-o', '--outdir', help='Output directory', default='results/')
     #parser.add_argument('-m', '--model', help='Model path')
-    parser.add_argument('-mt', '--mtype', help='Model type', choices=[
-                        'vit384', 'vit224', 'wide-resnet', 'deit', 'bit_152_4'], default='vit224')
+    parser.add_argument('-mt', '--mtype', help='Model type', choices=list(mtype_dict.keys()), default='vit224')
     parser.add_argument('-dpath', help='Data path',
                         default='/data/datasets/Imagenet/val')
     parser.add_argument('--gpu', help='gpu to use', default=0, type=int)
