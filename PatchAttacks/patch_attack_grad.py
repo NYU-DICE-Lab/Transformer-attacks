@@ -22,7 +22,7 @@ import argparse
 from timm.data import resolve_data_config
 from timm.data.transforms_factory import create_transform
 import numpy as np
-import foolbox as fb
+#import foolbox as fb
 import matplotlib
 matplotlib.use('Agg')
 
@@ -42,9 +42,9 @@ def prod(x):
 mtype_dict = {'vit384': 'vit_base_patch16_384', 'vit224': 'vit_base_patch16_224',
               'wide-resnet': 'wide_resnet101_2', 'deit224': 'vit_deit_base_patch16_224', 'bit_152_4': 'resnetv2_152x4_bitm',
               'deit224_distill':'vit_deit_base_distilled_patch16_224', 'effnet': 'tf_efficientnet_l2_ns'}
-att_type_dict = {'pgdlinf': fb.attacks.LinfProjectedGradientDescentAttack(rel_stepsize=0.033, steps=40, random_start=True),
-                 'pgdl2': fb.attacks.L2ProjectedGradientDescentAttack(steps=40, random_start=True)
-                 }
+#att_type_dict = {'pgdlinf': fb.attacks.LinfProjectedGradientDescentAttack(rel_stepsize=0.033, steps=40, random_start=True),
+#                 'pgdl2': fb.attacks.L2ProjectedGradientDescentAttack(steps=40, random_start=True)
+#                 }
 
 
 def get_patches(img, patch_size=16):
@@ -102,7 +102,7 @@ def MultiPatchGDAttack(model, img, label, loss=nn.CrossEntropyLoss(), iterations
             logging.debug(grad_val[0].shape)
             for p in range(k):
                 p_x, p_y = grad_mags_sorted[p][0]
-                img[:, :, p_x:p_x+patch_size, p_y:p_y+patch_size] += lr * \
+                img[:, :, p_x:p_x+patch_size, p_y:p_y+patch_size].data += lr * \
                     grad_val[0][:, :, p_x:p_x+patch_size, p_y:p_y+patch_size]
             if clip_flag:
                 img.clamp(bounds[0], bounds[1])
@@ -126,8 +126,8 @@ def build_parser():
     parser.add_argument('-dpath', help='Data path',
                         default='/data/datasets/Imagenet/val')
     parser.add_argument('--gpu', help='gpu to use', default=0, type=int)
-    parser.add_argument('-at', '--att_type', help='Attack type',
-                        choices=['pgdl2', 'pgdlinf', 'gd'], default='pgdlinf')
+ #   parser.add_argument('-at', '--att_type', help='Attack type',
+ #                       choices=['pgdl2', 'pgdlinf', 'gd'], default='pgdlinf')
     parser.add_argument(
         '-it', '--iter', help='No. of iterations', type=int, default=40)
     parser.add_argument('-mp', '--max_patches',
@@ -153,7 +153,7 @@ if __name__ == '__main__':
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     mtype = args.mtype
-    att_type = args.att_type
+  #  att_type = args.att_type
     clip_flag = args.clip
 
     device = torch.device(f'cuda:{args.gpu}' if torch.cuda.is_available() else 'cpu')
@@ -162,7 +162,7 @@ if __name__ == '__main__':
                         filemode='w', format='%(name)s - %(levelname)s - %(message)s')
 
     model_name = mtype_dict[mtype]
-    logging.info(f'Running {att_type} for {model_name} for imagenet')
+#    logging.info(f'Running {att_type} for {model_name} for imagenet')
     if model_name is None:
         raise Exception(f'{mtype}: No such model type found')
 
@@ -192,7 +192,7 @@ if __name__ == '__main__':
               (1-config['mean'][0])/config['std'][0]]
     clean_acc = 0.0
     for idx, (img, label) in enumerate(test_dl):
-        if idx <= args.start_idx:
+        if idx < args.start_idx:
             continue
         if idx > args.num_images:
             break
