@@ -68,7 +68,7 @@ def reconstruct_img(patches, img):
     return recon
 
 
-def MultiPatchGDAttack(model, img, label, loss=nn.CrossEntropyLoss(), iterations=40, device=torch.device('cuda:0'), max_num_patches=100, clip_flag=False, bounds=[-1, 1], patch_size=16, lr=0.033, *args, **kwargs):
+def MultiPatchGDAttack(model, img, label, loss=nn.CrossEntropyLoss(), iterations=40, device=torch.device('cuda:0'), max_num_patches=100, clip_flag=False, bounds=[-1, 1], patch_size=16, lr=0.033, eps=1.0, *args, **kwargs):
     base_img = copy.deepcopy(img)
     img = img.to(device)
     img.requires_grad_(True)
@@ -102,8 +102,8 @@ def MultiPatchGDAttack(model, img, label, loss=nn.CrossEntropyLoss(), iterations
             logging.debug(grad_val[0].shape)
             for p in range(k):
                 p_x, p_y = grad_mags_sorted[p][0]
-                img[:, :, p_x:p_x+patch_size, p_y:p_y+patch_size].data += lr * \
-                    grad_val[0][:, :, p_x:p_x+patch_size, p_y:p_y+patch_size]
+                img[:, :, p_x:p_x+patch_size, p_y:p_y+patch_size].data += torch.clamp(lr * \
+                    grad_val[0][:, :, p_x:p_x+patch_size, p_y:p_y+patch_size], min=-eps, max=eps) ## Infinity norm constraint. Here, we are constructing a mixed norm attack
             if clip_flag:
                 img.clamp(bounds[0], bounds[1])
             with torch.no_grad():
@@ -140,6 +140,7 @@ def build_parser():
                         type=float, default=0.033)
     parser.add_argument('-ps', '--patch_size', help='Patch size', default=16, type=int)
     parser.add_argument('-si', '--start_idx', help='Start index for imagenet', default=0, type=int)
+    parser.add_argument('-eps', '--epsilon', help='Epsilon boudn for mixed norm attacks', default=1.0, type=float)
     #parser.add_argument('-ns', '--skipimages', help='No. of images to skip', default=20, type=int)
     return parser
 
@@ -155,6 +156,7 @@ if __name__ == '__main__':
     mtype = args.mtype
   #  att_type = args.att_type
     clip_flag = args.clip
+    eps = args.epsilon
 
     device = torch.device(f'cuda:{args.gpu}' if torch.cuda.is_available() else 'cpu')
 
@@ -190,6 +192,7 @@ if __name__ == '__main__':
     # TODO:Figure out a smarter way of calculating image bounds
     bounds = [(0-config['mean'][0])/config['std'][0],
               (1-config['mean'][0])/config['std'][0]]
+    eps = (eps - config['mean'][0])/config['std'][0]
     clean_acc = 0.0
     for idx, (img, label) in enumerate(test_dl):
         if idx < args.start_idx:
@@ -216,7 +219,7 @@ if __name__ == '__main__':
         bs, ch, sx, sy = img.shape
         label = label.to(device)
         succ, img, attack_img, num_patches = MultiPatchGDAttack(model, img, label, loss=nn.CrossEntropyLoss(
-        ), iterations=args.iter, device=device, max_num_patches=args.max_patches, clip_flag=clip_flag, bounds=bounds, patch_size=args.patch_size, lr=args.lr)
+        ), iterations=args.iter, device=device, max_num_patches=args.max_patches, clip_flag=clip_flag, bounds=bounds, patch_size=args.patch_size, lr=args.lr, eps=eps)
         logging.info(f'{idx}, {succ}, {num_patches}')
         attack_succ += succ
         ks[idx] = (succ, num_patches)
