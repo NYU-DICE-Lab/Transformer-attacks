@@ -40,8 +40,8 @@ def prod(x):
 
 
 mtype_dict = {'vit384': 'vit_base_patch16_384', 'vit224': 'vit_base_patch16_224',
-              'wide-resnet': 'wide_resnet101_2', 'deit224': 'vit_deit_base_patch16_224', 'bit_152_4': 'resnetv2_152x4_bitm',
-              'deit224_distill':'vit_deit_base_distilled_patch16_224', 'effnet': 'tf_efficientnet_l2_ns'}
+              'wide-resnet': 'wide_resnet101_2', 'deit224': 'deit_base_patch16_224', 'bit_152_4': 'resnetv2_152x4_bitm',
+              'deit224_distill':'deit_base_distilled_patch16_224', 'effnet': 'tf_efficientnet_l2_ns'}
 #att_type_dict = {'pgdlinf': fb.attacks.LinfProjectedGradientDescentAttack(rel_stepsize=0.033, steps=40, random_start=True),
 #                 'pgdl2': fb.attacks.L2ProjectedGradientDescentAttack(steps=40, random_start=True)
 #                 }
@@ -74,7 +74,8 @@ def MultiPatchGDAttack(model, img, label, loss=nn.CrossEntropyLoss(), iterations
     img.requires_grad_(True)
     bs, ch, sx, sy = img.size()
     label = label.to(device)
-    patch_size = 16
+    print(f'epsilon:{epsilon}')
+   # patch_size = 16
     #l2_norms = {}
     #max_val = 0.0
     #max_i, max_j = 0,0
@@ -192,7 +193,9 @@ if __name__ == '__main__':
     # TODO:Figure out a smarter way of calculating image bounds
     bounds = [(0-config['mean'][0])/config['std'][0],
               (1-config['mean'][0])/config['std'][0]]
-    eps_val = (eps_val - config['mean'][0])/config['std'][0]
+        
+    eps_val = (eps_val)/config['std'][0]
+    print(config, bounds, eps_val)
     clean_acc = 0.0
     for idx, (img, label) in enumerate(test_dl):
         if idx < args.start_idx:
