@@ -93,29 +93,28 @@ def MultiPatchGDAttack(model, img, label, loss=nn.CrossEntropyLoss(), iterations
     grad_mags_sorted = [(k, v) for k, v in sorted_tuples]
 
     # We try to find minimum number of patches required to break image by checking with a fixed number of gradient updates
-    for k in range(1, max_num_patches+1):
-        img = copy.deepcopy(base_img).requires_grad_(
-            True)  # Resetting image after each failure
-        for i in range(iterations):
-            pred = model(img)
-            loss_val = loss(pred, label)
-            grad_val = autograd.grad(loss_val, img)
-            logging.debug(grad_val[0].shape)
-            for p in range(k):
-                p_x, p_y = grad_mags_sorted[p][0]
-                img[:, :, p_x:p_x+patch_size, p_y:p_y+patch_size].data += (lr * \
+    #for k in range(1, max_num_patches+1):
+    img = copy.deepcopy(base_img).requires_grad_(True)  # Resetting image after each failure
+    for i in range(iterations):
+        pred = model(img)
+        loss_val = loss(pred, label)
+        grad_val = autograd.grad(loss_val, img)
+        logging.debug(grad_val[0].shape)
+        for p in range(max_num_patches):
+            p_x, p_y = grad_mags_sorted[p][0]
+            img[:, :, p_x:p_x+patch_size, p_y:p_y+patch_size].data += (lr * \
                     grad_val[0][:, :, p_x:p_x+patch_size, p_y:p_y+patch_size]).clamp(-epsilon, epsilon) ## Infinity norm constraint. Here, we are constructing a mixed norm attack
-            if clip_flag:
-                img.clamp(bounds[0], bounds[1])
-            with torch.no_grad():
-                pred2 = model(img)
-                if torch.argmax(pred2, dim=1) != label:
-                    logging.info('Image broken at iteration {i}')
-                    succ = 1
-                    break
-        if succ == 1:
-            break
-    return succ, base_img, img, k
+        if clip_flag:
+            img.clamp(bounds[0], bounds[1])
+        with torch.no_grad():
+            pred2 = model(img)
+            if torch.argmax(pred2, dim=1) != label:
+                logging.info('Image broken at iteration {i}')
+                succ = 1
+                break
+        #if succ == 1:
+        #    break
+    return succ, base_img, img, max_num_patches
 
 
 def build_parser():
