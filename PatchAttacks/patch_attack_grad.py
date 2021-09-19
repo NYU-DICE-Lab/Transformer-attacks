@@ -74,7 +74,7 @@ def MultiPatchGDAttack(model, img, label, loss=nn.CrossEntropyLoss(), iterations
     img.requires_grad_(True)
     bs, ch, sx, sy = img.size()
     label = label.to(device)
-    patch_size = 16
+    #patch_size = 16
     #l2_norms = {}
     #max_val = 0.0
     #max_i, max_j = 0,0
@@ -101,6 +101,7 @@ def MultiPatchGDAttack(model, img, label, loss=nn.CrossEntropyLoss(), iterations
             grad_val = autograd.grad(loss_val, img)
             logging.debug(grad_val[0].shape)
             for p in range(k):
+                #print(p)
                 p_x, p_y = grad_mags_sorted[p][0]
                 img[:, :, p_x:p_x+patch_size, p_y:p_y+patch_size].data += (lr * \
                     grad_val[0][:, :, p_x:p_x+patch_size, p_y:p_y+patch_size]).clamp(-epsilon, epsilon) ## Infinity norm constraint. Here, we are constructing a mixed norm attack
