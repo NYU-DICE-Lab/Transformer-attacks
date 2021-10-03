@@ -42,7 +42,7 @@ def prod(x):
 mtype_dict = {'vit384': 'vit_base_patch16_384', 'vit224': 'vit_base_patch16_224',
               'wide-resnet': 'wide_resnet101_2', 'deit224': 'deit_base_patch16_224', 'bit_152_4': 'resnetv2_152x4_bitm',
               'deit224_distill':'deit_base_distilled_patch16_224', 'effnet': 'tf_efficientnet_l2_ns',
-              'mlpb16': 'mixer_b16_224'}
+              'mlpb16': 'mixer_b16_224', 'resnet50':'resnet50'}
 #att_type_dict = {'pgdlinf': fb.attacks.LinfProjectedGradientDescentAttack(rel_stepsize=0.033, steps=40, random_start=True),
 #                 'pgdl2': fb.attacks.L2ProjectedGradientDescentAttack(steps=40, random_start=True)
 #                 }
@@ -89,7 +89,6 @@ def MultiPatchGDAttack(model, img, label, loss=nn.CrossEntropyLoss(), iterations
     for i in range(0, sx, patch_size):
         for j in range(0, sy, patch_size):
             grad_mags[(i, j)] = torch.norm(
-
                 grad_val[0][:, :, i:i+patch_size, j:j+patch_size], p="fro")
     sorted_tuples = sorted(grad_mags.items(), key=lambda x: x[1], reverse=True)
     grad_mags_sorted = [(k, v) for k, v in sorted_tuples]
