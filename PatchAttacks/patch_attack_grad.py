@@ -104,8 +104,9 @@ def MultiPatchGDAttack(model, img, label, loss=nn.CrossEntropyLoss(), iterations
             for p in range(k):
                 p_x, p_y = grad_mags_sorted[p][0]
                 img[:, :, p_x:p_x+patch_size, p_y:p_y+patch_size].data += (lr * \
-                    torch.sign(grad_val[0][:, :, p_x:p_x+patch_size, p_y:p_y+patch_size])) ## Infinity norm constraint. Here, we are constructing a mixed norm attack
+                    (grad_val[0][:, :, p_x:p_x+patch_size, p_y:p_y+patch_size]).sign()) ## Infinity norm constraint. Here, we are constructing a mixed norm attack
             if clip_flag:
+                img = torch.max(torch.min(img, img+epsilon), img-epsilon)
                 img.clamp(bounds[0], bounds[1])
             with torch.no_grad():
                 pred2 = model(img)
@@ -195,6 +196,7 @@ if __name__ == '__main__':
               (1-config['mean'][0])/config['std'][0]]
         
     eps_val = (eps_val)/config['std'][0]
+    args.lr = args.lr/config['std'][0]
     print(config, bounds, eps_val)
     clean_acc = 0.0
     for idx, (img, label) in enumerate(test_dl):
